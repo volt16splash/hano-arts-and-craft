@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en"><head><script id="aura-preview-performance-controller">
+(function() {
+if (window.__auraPreviewPerformanceController) return;
+const nativeRequestAnimationFrame = window.requestAnimationFrame
+? window.requestAnimationFrame.bind(window)
+: function(callback) { return window.setTimeout(function() { callback(Date.now()); }, 16); };
+const nativeCancelAnimationFrame = window.cancelAnimationFrame
+? window.cancelAnimationFrame.bind(window)
+: window.clearTimeout.bind(window);
+const nativeSetInterval = window.setInterval.bind(window);
+let paused = false;
+let nextFrameId = 1;
+const frameRecords = new Map();
+const pausedFrameCallbacks = new Map();
+const style = document.createElement('style');
+style.id = 'aura-preview-performance-style';
+style.textContent = [
+'html[data-aura-preview-paused="true"] *,',
+'html[data-aura-preview-paused="true"] *::before,',
+'html[data-aura-preview-paused="true"] *::after {',
+'  animation-play-state: paused !important;',
+'  transition-duration: 0s !important;',
+'  scroll-behavior: auto !important;',
+'}'
+].join('\n');
+document.head.appendChild(style);
+window.requestAnimationFrame = function(callback) {
+const frameId = nextFrameId++;
+if (paused) {
+pausedFrameCallbacks.set(frameId, callback);
+frameRecords.set(frameId, { paused: true });
+return frameId;
+}
+const nativeFrameId = nativeRequestAnimationFrame(function(timestamp) {
+frameRecords.delete(frameId);
+callback(timestamp);
+});
+frameRecords.set(frameId, { nativeFrameId: nativeFrameId });
+return frameId;
+};
+window.cancelAnimationFrame = function(frameId) {
+const record = frameRecords.get(frameId);
+pausedFrameCallbacks.delete(frameId);
+if (record && typeof record.nativeFrameId !== 'undefined') {
+nativeCancelAnimationFrame(record.nativeFrameId);
+}
+frameRecords.delete(frameId);
+};
+window.setInterval = function(callback, delay) {
+const args = Array.prototype.slice.call(arguments, 2);
+return nativeSetInterval(function() {
+if (paused) return;
+callback.apply(this, args);
+}, delay);
+};
+const flushPausedFrames = function() {
+const callbacks = Array.from(pausedFrameCallbacks.entries());
+pausedFrameCallbacks.clear();
+callbacks.forEach(function(entry) {
+const frameId = entry[0];
+const callback = entry[1];
+const nativeFrameId = nativeRequestAnimationFrame(function(timestamp) {
+frameRecords.delete(frameId);
+callback(timestamp);
+});
+frameRecords.set(frameId, { nativeFrameId: nativeFrameId });
+});
+};
+const setPaused = function(nextPaused) {
+const shouldPause = Boolean(nextPaused);
+if (paused === shouldPause) return;
+paused = shouldPause;
+document.documentElement.toggleAttribute('data-aura-preview-paused', paused);
+if (!paused) {
+flushPausedFrames();
+}
+};
+window.__auraPreviewPerformanceController = {
+setPaused: setPaused,
+get paused() {
+return paused;
+}
+};
+window.addEventListener('message', function(event) {
+if (event.source !== window.parent) return;
+if (!event.data || event.data.type !== 'aura-preview-performance-mode') return;
+setPaused(event.data.paused);
+});
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hano Arts and Craft — Motion Edit</title>
+<meta name="description" content="A cinematic fashion landing experience for curated capsules, styling appointments, seasonal collections, and private release updates.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet"><!-- aura-ga4-start -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-2M6V79H761"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-2M6V79H761');
+</script>
+<!-- aura-ga4-end -->
+</head>
+  <body class="min-h-screen overflow-x-hidden bg-[#102818] text-[#071009] antialiased [font-family:'Plus_Jakarta_Sans',system-ui,sans-serif] selection:bg-[#183f24] selection:text-[#f8f4de]">
+    <div id="webglFallback" aria-hidden="true" class="pointer-events-none fixed inset-0 z-0 opacity-70" style="background-image: radial-gradient(circle at 20% 18%, rgba(252,232,124,.22), transparent 24%), radial-gradient(circle at 82% 12%, rgba(175,234,194,.18), transparent 28%), radial-gradient(circle at 60% 78%, rgba(255,183,154,.16), transparent 26%), linear-gradient(135deg, #102818 0%, #18341f 52%, #0b1d12 100%);"></div>
+    <canvas id="auraCanvas" aria-hidden="true" class="pointer-events-none fixed inset-0 z-0 h-full w-full opacity-70" width="2144" height="1632"></canvas>
+
+    
+
+    <div id="motionCurtain" aria-hidden="true" class="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-[#071009] text-[#f7f4df]">
+      <div class="relative w-[min(88vw,46rem)] overflow-hidden rounded-[2rem] border border-white/10 bg-white/[.03] p-5 sm:p-7" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.12), 0 2rem 6rem rgba(0,0,0,.34);">
+        <div class="absolute inset-0 opacity-25" style="background-image: linear-gradient(135deg, rgba(255,255,255,.14) 0.0625rem, transparent 0.0625rem); background-size: 1.25rem 1.25rem;"></div>
+        <div class="relative flex items-center justify-between gap-4">
+          <p class="curtain-word text-xs font-semibold uppercase tracking-[0.22rem] text-[#dcefc8]/75">
+            Hano Arts and Craft
+          </p>
+          <p id="motionTime" class="text-xs font-semibold tabular-nums text-[#dcefc8]/75"></p>
+        </div>
+        <div class="relative mt-16 sm:mt-20">
+          <p class="curtain-word text-xs font-semibold uppercase tracking-[0.28rem] text-[#dcefc8]/65">
+            Hano Arts and Craft
+          </p>
+          <h2 class="curtain-title mt-3 text-4xl font-semibold leading-[.92] tracking-tight text-[#fffbe9] sm:text-6xl lg:text-7xl">
+            Crafting art, inspiring every day.
+          </h2>
+        </div>
+        <div class="relative mt-10 h-1 overflow-hidden rounded-full bg-white/10">
+          <div id="motionProgress" class="h-full w-full origin-left scale-x-0 rounded-full bg-[#e9ef96]"></div>
+        </div>
+      </div>
+    </div><main class="relative z-10 mx-auto w-full max-w-[94rem] px-3 py-3 sm:px-5 sm:py-5 lg:px-8">
+      <section id="pageShell" class="relative overflow-hidden rounded-[2rem] border border-white/15 bg-[#f7f7ed]" style="box-shadow: 0 1.5rem 5rem rgba(0,0,0,.34), inset 0 0.0625rem 0 rgba(255,255,255,.82);">
+        <div aria-hidden="true" class="pointer-events-none absolute inset-0 opacity-[.18]" style="background-image: linear-gradient(135deg, rgba(17, 53, 25, 0.22) 0.0625rem, transparent 0.0625rem); background-size: 1.5rem 1.5rem;"></div>
+
+        <header class="relative z-10 border-b border-[#15361f]/10">
+          <nav data-motion="nav" class="flex items-center justify-between gap-4 px-5 py-4 sm:px-8 lg:px-10">
+            <a href="#" class="inline-flex items-center gap-2 rounded-full border border-[#14331c]/10 bg-white/70 px-3 py-2 text-sm font-semibold text-[#0d1b10] backdrop-blur" aria-label="Hano Arts and Craft home" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.92), 0 .75rem 1.75rem rgba(17,52,24,.08);">
+              <span class="grid h-7 w-7 place-items-center rounded-full bg-[#173f22] text-[#e9ef96]" style="background-image: linear-gradient(180deg,#2e6d39,#102d18); box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.28), inset 0 -0.125rem .25rem rgba(0,0,0,.22);">
+                <iconify-icon icon="solar:star-linear" stroke-width="1.5" class="text-base"></iconify-icon>
+              </span>
+              HANO ARTS AND CRAFT
+            </a>
+            <div class="hidden items-center gap-7 text-xs font-semibold text-[#132516]/60 md:flex">
+              <a class="transition hover:text-[#132516]" href="#collection">
+                Collection
+              </a>
+              <a class="transition hover:text-[#132516]" href="#story">
+                About
+              </a>
+              <a class="transition hover:text-[#132516]" href="#contact">
+                Contact us now
+              </a>
+            </div>
+            <a href="#contact" class="inline-flex items-center gap-2 rounded-full bg-[#0e2113] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#173b20]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.16), inset 0 -0.125rem .375rem rgba(0,0,0,.28), 0 .75rem 1.5rem rgba(16,50,24,.18);">
+              Purchase Craft Now
+              <iconify-icon icon="solar:arrow-right-up-linear" stroke-width="1.5" class="text-base"></iconify-icon>
+            </a>
+          </nav>
+
+          <div class="text-[#050705] overflow-hidden w-full h-screen min-h-[700px] font-sans antialiased selection:bg-[#173f22]/20 relative" style="background-color: #f2fde9; background-image: radial-gradient(circle at 15% 8%, rgba(232,255,208,.95), transparent 31%), radial-gradient(circle at 82% 18%, rgba(255,230,128,.45), transparent 24%), linear-gradient(180deg,#f2fde9 0%,#fffef7 74%)">
+
+    <!-- WebGL Background Layer -->
+    <canvas id="webgl-canvas" class="absolute inset-0 z-0 pointer-events-none w-full h-full" width="2012" height="1632" style="width: 1006px; height: 816px;"></canvas>
+
+    <!-- Framed Grid Layout & Container Lines -->
+    <div class="frame-container absolute inset-4 md:inset-8 pointer-events-none z-40 border border-[#173f22]/10 flex flex-col justify-between">
+        <!-- Structural Vertical Lines -->
+        <div class="absolute top-0 bottom-0 left-[15%] border-l border-[#173f22]/10 w-px hidden md:block"></div>
+        <div class="absolute top-0 bottom-0 right-[15%] border-r border-[#173f22]/10 w-px hidden md:block"></div>
+        <div class="absolute top-1/2 left-0 right-0 border-t border-[#173f22]/10 h-px -translate-y-1/2 opacity-30"></div>
+
+        <!-- Mini Corner Squares (L-Brackets/Markers) -->
+        <div class="absolute top-0 left-0 w-3 h-3 border-t border-l border-[#173f22]/30 -translate-x-px -translate-y-px"></div>
+        <div class="absolute top-0 right-0 w-3 h-3 border-t border-r border-[#173f22]/30 translate-x-px -translate-y-px"></div>
+        <div class="absolute bottom-0 left-0 w-3 h-3 border-b border-l border-[#173f22]/30 -translate-x-px translate-y-px"></div>
+        <div class="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-[#173f22]/30 translate-x-px translate-y-px"></div>
+
+        <!-- Header -->
+        <header class="p-5 md:p-6 flex justify-between items-center relative z-20">
+        </header>
+
+        <!-- Footer -->
+        <footer class="p-5 md:p-6 flex justify-between items-end relative z-20">
+            <div class="text-xs text-[#132516]/60 max-w-[200px] leading-relaxed font-light">
+                Curated sartorial elegance in motion. Exploring textures in real-time.
+            </div>
+        </footer>
+    </div>
+
+    <!-- Main Motion Area -->
+    <div class="relative z-10 w-full h-full flex items-center justify-center" style="transform-style: preserve-3d; perspective: 1000px;">
+        
+        <!-- Typography overlay -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none mix-blend-overlay z-10">
+    <h1 class="hero-title text-[7rem] md:text-[12rem] lg:text-[16rem] font-extralight tracking-tight text-neutral-950 opacity-30 text-center leading-[0.8] uppercase">
+        Creative<br>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-neutral-900 to-neutral-400 italic font-thin block mt-2 md:mt-4">Studio</span>
+    </h1>
+</div>
+
+        <!-- Video in center -->
+        <div class="relative z-20 w-[320px] h-[420px] md:w-[480px] md:h-[560px] rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
+            <video autoplay muted loop playsinline class="w-full h-full object-cover">
+                <source src="💕💕💖💖💖💖💕💕.mp4" type="video/mp4">
+            </video>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" class=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js" class=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
+    <script>
+        function initHeroSequence() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initHeroSequence);
+        } else {
+            initHeroSequence();
+        }
+    </script>
+</div>        <section class="relative z-10 border-b border-[#173f22]/10 bg-[#fffbed] px-5 py-10 sm:px-8 lg:px-10 lg:py-12" style="background-image: radial-gradient(circle at 45% 0%, rgba(255,232,126,.35), transparent 26%), linear-gradient(180deg,#fffbea 0%,#fffef9 66%); box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9)" id="collection">
+          <div class="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div class="">
+              <p data-motion="collectionKicker" class="text-xs font-semibold uppercase tracking-[0.18rem] text-[#6f5a11]/65">
+                Capsule board
+              </p>
+              <h2 data-motion="collectionTitle" class="mt-2 text-3xl font-semibold tracking-tight text-[#161b12] sm:text-4xl">
+                Collection in warm focus
+              </h2>
+              <p data-motion="collectionCopy" class="mt-3 max-w-2xl text-sm font-semibold leading-6 text-[#161b12]/70 sm:text-base">
+                Pieces chosen for late light, easy structure, and repeat wear
+                across city days and soft evenings.
+              </p>
+            </div>
+            <a href="#all-crafts" class="inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold hover:bg-white/70">
+              Browse all
+              <iconify-icon icon="solar:arrow-right-linear" stroke-width="1.5" class="text-base"></iconify-icon>
+            </a>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <article data-motion="collection1" class="group overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2.25rem rgba(68,47,10,.12);">
+              <video src="💕💕💖💖💖💖💕💕.mp4" poster="A blurry picture from last years collection.🌺.heic" data-aura-generated-video="true" data-aura-video-preset="hover" muted="" playsinline="" preload="metadata" aria-label="Cream summer dress editorial" class="h-72 w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-[1.03]"></video>
+            </article>
+          </div>
+        </section>
+
+<div class="grid lg:grid-cols-[1.05fr_.95fr]">
+            <section class="relative min-h-[42rem] overflow-hidden border-b border-[#15361f]/10 bg-[#f4f8e9] px-5 pb-8 pt-5 sm:px-8 sm:pb-10 lg:border-b-0 lg:border-r lg:px-10" style="background-image: radial-gradient(circle at 15% 8%, rgba(232,255,208,.95), transparent 31%), radial-gradient(circle at 82% 18%, rgba(255,230,128,.45), transparent 24%), linear-gradient(180deg,#f2fde9 0%,#fffef7 74%)">
+              <div aria-hidden="true" class="absolute left-5 top-0 h-full w-px bg-[#173f22]/10 sm:left-8 lg:left-10"></div>
+              <div aria-hidden="true" class="absolute right-5 top-0 h-full w-px bg-[#173f22]/10 sm:right-8 lg:right-10"></div>
+
+              <div class="relative z-10 grid gap-6 pt-8 lg:grid-cols-[.92fr_1fr] lg:items-end">
+                <div class="">
+                  <p data-motion="storyKicker" class="text-xs font-semibold uppercase tracking-[0.18rem] text-[#6f5a11]/65">
+                    Testimonials
+                  </p>
+                  <h2 data-motion="headline" class="mt-5 max-w-3xl text-4xl font-semibold leading-[.96] tracking-tight text-[#050705] sm:text-6xl lg:text-7xl">
+                    What Our Clients Say
+                  </h2>
+                </div>
+                <div data-motion="introCopy" class="max-w-xl lg:pb-2">
+                  <div class="rounded-[1.75rem] border border-white/70 bg-white/55 px-6 py-7 backdrop-blur" style="background-image: linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.42)); box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.95), inset 0 -0.0625rem .25rem rgba(12,49,24,.08), 0 1rem 3rem rgba(31,91,95,.12);">
+                    <p class="text-sm font-semibold leading-6 text-[#0e1712]">
+                      "Hano Arts and Craft transformed my space with breathtaking handcrafted pieces. Every detail tells a story, and the quality is unmatched."
+                    </p>
+                    <div class="mt-6">
+                      <p class="text-sm font-semibold">Amara Osei</p>
+                      <p class="mt-1 text-xs font-semibold text-[#112116]/55">
+                        Interior Designer
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="relative z-10 mt-8 h-[31rem] sm:h-[34rem]">
+                <div data-motion="frameLeft" class="absolute left-0 top-[19%] hidden h-[15rem] w-[10rem] overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:block lg:left-[2%]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.92), 0 1.25rem 2.75rem rgba(22,68,32,.16);">
+                  <img src="Mini Art Studio 💡🌻🪻What do I call this now .heic" alt="Emerald editorial look with tailored styling" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="Mini Art Studio 💡🌻🪻What do I call this now .heic">
+                </div>
+
+                <div data-motion="frameCenter" class="absolute left-1/2 top-0 z-20 h-[24rem] w-[78%] -translate-x-1/2 overflow-hidden rounded-[2rem] border border-white/75 bg-white p-1 sm:h-[28rem] sm:w-[55%]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.94), 0 1.75rem 4rem rgba(22,68,32,.2);">
+                  <img src="I see itI like itI want itI MAKE it💕🪻 Cute accessories for my little bun 💕 ✨️.heic" alt="Tailored resort portrait in natural light" class="h-full w-full rounded-[1.65rem] object-cover" data-element-src="I see itI like itI want itI MAKE it💕🪻 Cute accessories for my little bun 💕 ✨️.heic">
+                  <div class="absolute bottom-3 left-3 right-3 rounded-[1.25rem] border border-white/25 bg-[#071009]/55 p-3 text-white backdrop-blur-md">
+                    <div class="flex items-center justify-between gap-3">
+                      <div class="">
+                        <p class="text-xs font-semibold uppercase tracking-[0.14rem] text-white/62">
+                          Look 07
+                        </p>
+                        <p class="mt-1 text-sm font-semibold">
+                          Sage tailoring, pearl knit, softened edge.
+                        </p>
+                      </div>
+                      <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white text-[#071009]">
+                        <iconify-icon icon="solar:play-linear" stroke-width="1.5" class="text-base"></iconify-icon>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div data-motion="frameTop" class="absolute left-[8%] top-[3%] z-10 h-[11rem] w-[12rem] overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:left-[18%]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1.25rem 2.5rem rgba(22,68,32,.13);">
+                  <img src="Happy Sunday and Happy Mothers Day 🪻⚘️✨️The act of giving people gifts on days that are not c.heic" alt="Pastel sculptural textile colors" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="Happy Sunday and Happy Mothers Day 🪻⚘️✨️The act of giving people gifts on days that are not c.heic">
+                </div>
+
+                <div data-motion="frameBottom" class="absolute bottom-0 left-[7%] z-20 h-[12rem] w-[13rem] overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:left-[20%]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1.25rem 2.5rem rgba(22,68,32,.14);">
+                  <img src="Birthdays are special ✨️ 💓 A day to be grateful for life and a day of sober reflection 💖Happy.heic" alt="Warm editorial lifestyle scene" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="Birthdays are special ✨️ 💓 A day to be grateful for life and a day of sober reflection 💖Happy.heic">
+                </div>
+
+                <div data-motion="frameRight" class="absolute right-0 top-[18%] h-[16rem] w-[10rem] overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:right-[2%]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.92), 0 1.25rem 2.75rem rgba(22,68,32,.16);">
+                  <img src="April is coming This is your cue to make a month planner🪻🌼✨️💕.heic" alt="Deep green accessory with folded textile" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="April is coming This is your cue to make a month planner🪻🌼✨️💕.heic">
+                </div>
+
+                <div data-motion="orbitBadge" class="absolute bottom-10 right-[12%] z-30 hidden rounded-full border border-[#173f22]/10 bg-[#fffbed]/85 px-4 py-3 text-xs font-semibold text-[#112416] backdrop-blur sm:flex sm:items-center sm:gap-2" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.92), 0 1rem 2rem rgba(24,67,34,.13);">
+                  <iconify-icon icon="solar:stars-linear" stroke-width="1.5" class="text-base text-[#245b31]"></iconify-icon>
+                  Eight-second reveal
+                </div>
+          </div>
+        </section>
+
+            <aside class="relative overflow-hidden bg-[#fbfaf3]">
+              <div class="grid gap-3 p-4 sm:grid-cols-3 lg:grid-cols-1 lg:p-5 xl:grid-cols-3">
+                <article data-motion="productA" class="group relative h-48 overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:h-56 lg:h-48 xl:h-44" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2rem rgba(18,52,25,.12);">
+                  <img src="These Hano paper art pieces from last years collection are red, with the theme Love. It remi.heic" alt="Ivory suit editorial image" class="h-full w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-105" data-element-src="These Hano paper art pieces from last years collection are red, with the theme Love. It remi.heic">
+                  <span class="absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full bg-black text-white" aria-hidden="true">
+                    <iconify-icon icon="solar:arrow-right-up-linear" stroke-width="1.5" class="text-base"></iconify-icon>
+                  </span>
+                </article>
+                <article data-motion="productB" class="group relative h-48 overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:h-56 lg:h-48 xl:h-44" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2rem rgba(18,52,25,.12);">
+                  <img src="The first photo shows a book cover, old and worn out, but the next is beautifully fresh and tra.heic" alt="Pastel pink paired styling" class="h-full w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-105">
+                  <span class="absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full bg-black text-white" aria-hidden="true">
+                    <iconify-icon icon="solar:arrow-right-up-linear" stroke-width="1.5" class="text-base"></iconify-icon>
+                  </span>
+                </article>
+                <article data-motion="productC" class="group relative h-48 overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:h-56 lg:h-48 xl:h-44" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2rem rgba(18,52,25,.12);">
+                  <img src="A blurry picture from last years collection.🌺.heic" alt="Peach draped chair and fabric" class="h-full w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-105">
+                  <span class="absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full bg-black text-white" aria-hidden="true">
+                    <iconify-icon icon="solar:arrow-right-up-linear" stroke-width="1.5" class="text-base"></iconify-icon>
+                  </span>
+                </article>
+              </div>
+
+              <section id="stories" class="relative overflow-hidden border-y border-[#173f22]/10 bg-[#eafbfd] px-5 py-10 sm:px-8 lg:px-10" style="background-image: radial-gradient(circle at 75% 18%, rgba(255,255,255,.9), transparent 32%), linear-gradient(180deg,#e5fbff 0%,#f9ffff 74%); box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), inset 0 -0.0625rem 0 rgba(21,72,83,.08);">
+                <div class="mb-8 flex items-start justify-between gap-5">
+                  <div class="">
+                    <p data-motion="storyKicker" class="text-xs font-semibold uppercase tracking-[0.18rem] text-[#245b61]/65">
+                      Atelier notes
+                    </p>
+                    <h2 data-motion="storyTitle" class="mt-2 text-2xl font-semibold tracking-tight text-[#0e1712] sm:text-3xl">
+                      Wardrobes with a point of view.
+                    </h2>
+                    <p data-motion="storyCopy" class="mt-2 max-w-xl text-sm font-semibold leading-6 text-[#112116]/68">
+                      Fittings, capsules, and style direction shaped around how
+                      each client actually moves.
+                    </p>
+                  </div>
+                  <a href="#story" class="hidden items-center gap-2 rounded-full px-3 py-2 text-xs font-semibold sm:inline-flex">
+                    View notes
+                    <iconify-icon icon="solar:arrow-right-linear" stroke-width="1.5" class="text-base"></iconify-icon>
+                  </a>
+                </div>
+
+                <div class="relative mx-auto flex min-h-[23rem] max-w-2xl items-center justify-center">
+                  <img data-motion="avatar1" class="absolute left-0 top-4 h-16 w-16 rounded-full border-4 border-white object-cover shadow-xl" src="Happy Sunday and Happy Mothers Day 🪻⚘️✨️The act of giving people gifts on days that are not c.heic" alt="Client portrait in warm light">
+                  <img data-motion="avatar2" class="absolute right-3 top-5 h-16 w-16 rounded-full border-4 border-white object-cover shadow-xl" src="Birthdays are special ✨️ 💓 A day to be grateful for life and a day of sober reflection 💖Happy.heic" alt="Client portrait with gold jewelry">
+                  <img data-motion="avatar3" class="absolute bottom-12 left-12 h-14 w-14 rounded-full border-4 border-white object-cover shadow-xl" src="I see itI like itI want itI MAKE it💕🪻 Cute accessories for my little bun 💕 ✨️.heic" alt="Client portrait with soft neutral styling">
+                  <img data-motion="avatar4" class="absolute bottom-10 right-8 h-14 w-14 rounded-full border-4 border-white object-cover shadow-xl" src="April is coming This is your cue to make a month planner🪻🌼✨️💕.heic" alt="Client portrait in editorial styling">
+
+                  <div data-motion="testimonial" class="max-w-md rounded-[1.75rem] border border-white/70 bg-white/55 px-6 py-7 text-center backdrop-blur" style="background-image: linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,.42)); box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.95), inset 0 -0.0625rem .25rem rgba(12,49,24,.08), 0 1rem 3rem rgba(31,91,95,.12);">
+                    <p class="text-sm font-semibold leading-6 text-[#0e1712]">
+                      "The capsule felt precise, not overworked. Every piece had
+                      a reason, and getting dressed became the easiest part of
+                      my week."
+                    </p>
+                    <div class="mt-6">
+                      <p class="text-sm font-semibold">Nora Vale</p>
+                      <p class="mt-1 text-xs font-semibold text-[#112116]/55">
+                        Creative Director
+                      </p>
+                    </div>
+                    <div class="mt-5 flex justify-center gap-2">
+                      <button aria-label="Previous testimonial" class="grid h-8 w-8 place-items-center rounded-full bg-black text-white transition hover:scale-105">
+                        <iconify-icon icon="solar:arrow-left-linear" stroke-width="1.5" class="text-base"></iconify-icon>
+                      </button>
+                      <button aria-label="Next testimonial" class="grid h-8 w-8 place-items-center rounded-full bg-black text-white transition hover:scale-105">
+                        <iconify-icon icon="solar:arrow-right-linear" stroke-width="1.5" class="text-base"></iconify-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section id="newsletter" class="relative overflow-hidden bg-[#98b988] p-5 sm:p-8 lg:p-10">
+                <div data-motion="newsletter" class="relative overflow-hidden rounded-[1.75rem] border border-white/20 bg-[#184f28] px-6 py-8 text-[#edf7df] sm:px-8 sm:py-9" style="background-image: radial-gradient(circle at 12% 35%, rgba(217,255,194,.18), transparent 28%), linear-gradient(180deg,#2e713d 0%,#123d1e 100%); box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.24), inset 0 -0.25rem .75rem rgba(0,0,0,.22), 0 1.25rem 3rem rgba(11,44,19,.22);">
+                  <div class="grid items-center gap-6 md:grid-cols-[.68fr_1fr]">
+                    <div class="select-none text-7xl font-semibold leading-[.82] tracking-tight text-[#d8efbe]" style="text-shadow: 0 .125rem 0 rgba(255,255,255,.20), 0 .5rem 1.25rem rgba(0,0,0,.24);">
+                      19
+                      <br>
+                      47
+                    </div>
+                    <div>
+                      <h2 class="text-2xl font-semibold tracking-tight text-[#edf7df] sm:text-3xl">
+                        Receive the private release letter.
+                      </h2>
+                      <p class="mt-4 max-w-xl text-sm font-semibold leading-6 text-[#e7f4d7]/82">
+                        First access to limited arrivals, appointment windows,
+                        and compact notes from the styling desk.
+                      </p>
+                      <form class="mt-6 flex max-w-xl flex-col gap-3 sm:flex-row" action="#" aria-label="Newsletter subscription form" data-newsletter="true">
+                        <label for="email" class="sr-only">Email address</label>
+                        <div class="flex min-h-12 flex-1 items-center gap-2 rounded-full border border-white/25 bg-[#12351c]/55 px-4" style="box-shadow: inset 0 0.125rem .375rem rgba(0,0,0,.22), inset 0 0.0625rem 0 rgba(255,255,255,.12);">
+                          <iconify-icon icon="solar:letter-linear" stroke-width="1.5" class="text-lg text-[#e7f4d7]/70"></iconify-icon>
+                          <input id="email" name="email" type="email" required="" placeholder="Enter your email" class="w-full bg-transparent text-sm font-semibold text-white placeholder:text-[#e7f4d7]/50 focus:outline-none">
+                        </div>
+                        <button type="submit" class="rounded-full bg-[#dcefc8] px-5 py-3 text-xs font-semibold text-[#14351b] transition hover:bg-white" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.75), inset 0 -0.125rem .25rem rgba(20,53,27,.16), 0 .75rem 1.5rem rgba(0,0,0,.16);">
+                          Request access
+                        </button>
+                        <p data-newsletter-msg="" class="mt-3 hidden w-full text-xs font-semibold text-[#e7f4d7]" role="status" aria-live="polite"></p>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </aside>
+          </div>
+        </header>
+
+        <section class="relative z-10 border-b border-[#173f22]/10 bg-[#fffbed] px-5 py-12 sm:px-8 lg:px-10 lg:py-24" style="background-image: radial-gradient(circle at 45% 0%, rgba(255,232,126,.35), transparent 26%), linear-gradient(180deg,#fffbea 0%,#fffef9 66%); box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9)" id="story">
+  <div class="grid gap-12 lg:grid-cols-[1fr_1.15fr] lg:items-center">
+    <!-- Story Text Content -->
+    <div class="max-w-xl">
+      <p data-motion="storyKicker" class="text-xs font-semibold uppercase tracking-[0.18rem] text-[#6f5a11]/65">
+        About Us
+      </p>
+      <h2 data-motion="storyTitle" class="mt-4 text-4xl font-semibold tracking-tight text-[#161b12] sm:text-5xl lg:text-6xl lg:leading-[1.1]">
+        Crafting Stories Through Art
+      </h2>
+      <p data-motion="storyCopy" class="mt-6 text-sm font-semibold leading-relaxed text-[#161b12]/70 sm:text-base">
+        Hano Arts and Craft is a creative studio dedicated to bringing imagination to life through handcrafted art pieces and bespoke designs. We blend traditional techniques with modern aesthetics to create unique works that inspire and captivate. Every piece we create tells a story, reflecting our passion for quality craftsmanship and attention to detail. From concept to completion, we collaborate closely with our clients to deliver art that resonates and endures.
+      </p>
+      <div class="mt-10 flex flex-wrap items-center gap-4 sm:gap-6">
+        <a href="#" class="inline-flex items-center gap-2 rounded-full bg-[#0e2113] px-6 py-3 text-xs font-semibold text-white transition hover:bg-[#173b20]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.16), inset 0 -0.125rem .375rem rgba(0,0,0,.28), 0 .75rem 1.5rem rgba(16,50,24,.18);">
+          See More
+          <i data-lucide="arrow-right" class="h-4 w-4"></i>
+        </a>
+        <a href="#all-crafts" class="inline-flex items-center gap-2 rounded-full px-4 py-3 text-xs font-semibold text-[#161b12] transition hover:bg-white/50">
+          Explore the Crafts
+        </a>
+      </div>
+    </div>
+
+    <!-- Story Images Layout -->
+    <div class="grid grid-cols-2 gap-4 pb-8 sm:gap-6 sm:pb-16">
+      <article data-motion="storyImage1" class="group overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1" style="box-shadow: rgba(255, 255, 255, 0.9) 0px 0.0625rem 0px inset, rgba(68, 47, 10, 0.12) 0px 1rem 2.25rem;">
+        <img src="Mini Art Studio 💡🌻🪻What do I call this now .heic" alt="Cream summer dress editorial" class="h-[20rem] w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-[1.03] sm:h-[28rem] lg:h-[36rem]" data-element-src="Mini Art Studio 💡🌻🪻What do I call this now .heic">
+      </article>
+      <article data-motion="storyImage2" class="group mt-12 overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:mt-20" style="box-shadow: rgba(255, 255, 255, 0.9) 0px 0.0625rem 0px inset, rgba(68, 47, 10, 0.12) 0px 1rem 2.25rem;">
+        <img src="Birthdays are special ✨️ 💓 A day to be grateful for life and a day of sober reflection 💖Happy.heic" alt="Golden earring beauty portrait" class="h-[18rem] w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-[1.03] sm:h-[24rem] lg:h-[30rem]">
+      </article>
+    </div>
+  </div>
+</section>
+
+        <section id="all-crafts" class="relative z-10 border-b border-[#173f22]/10 bg-[#fffbed] px-5 py-10 sm:px-8 lg:px-10 lg:py-12" style="background-image: radial-gradient(circle at 45% 0%, rgba(255,232,126,.35), transparent 26%), linear-gradient(180deg,#fffbea 0%,#fffef9 66%); box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9)">
+          <div class="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div class="">
+              <p class="text-xs font-semibold uppercase tracking-[0.18rem] text-[#6f5a11]/65">
+                All Crafts
+              </p>
+              <h2 class="mt-2 text-3xl font-semibold tracking-tight text-[#161b12] sm:text-4xl">
+                Our Complete Collection
+              </h2>
+            </div>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <article class="group overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2.25rem rgba(68,47,10,.12);">
+              <video src="💕💕💖💖💖💖💕💕.mp4" poster="A blurry picture from last years collection.🌺.heic" muted="" playsinline="" preload="metadata" class="h-72 w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-[1.03]"></video>
+            </article>
+            <article class="group overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2.25rem rgba(68,47,10,.12);">
+              <img src="Mini Art Studio 💡🌻🪻What do I call this now .heic" alt="Mini Art Studio" class="h-72 w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-[1.03]">
+            </article>
+            <article class="group overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2.25rem rgba(68,47,10,.12);">
+              <img src="These Hano paper art pieces from last years collection are red, with the theme Love. It remi.heic" alt="Paper art pieces" class="h-72 w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-[1.03]">
+            </article>
+            <article class="group overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2.25rem rgba(68,47,10,.12);">
+              <img src="A blurry picture from last years collection.🌺.heic" alt="Collection" class="h-72 w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-[1.03]">
+            </article>
+            <article class="group overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2.25rem rgba(68,47,10,.12);">
+              <img src="Happy Sunday and Happy Mothers Day 🪻⚘️✨️The act of giving people gifts on days that are not c.heic" alt="Mothers Day" class="h-72 w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-[1.03]">
+            </article>
+            <article class="group overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2.25rem rgba(68,47,10,.12);">
+              <img src="Birthdays are special ✨️ 💓 A day to be grateful for life and a day of sober reflection 💖Happy.heic" alt="Birthdays" class="h-72 w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-[1.03]">
+            </article>
+            <article class="group overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2.25rem rgba(68,47,10,.12);">
+              <img src="I see itI like itI want itI MAKE it💕🪻 Cute accessories for my little bun 💕 ✨️.heic" alt="Accessories" class="h-72 w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-[1.03]">
+            </article>
+            <article class="group overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2.25rem rgba(68,47,10,.12);">
+              <img src="April is coming This is your cue to make a month planner🪻🌼✨️💕.heic" alt="Month planner" class="h-72 w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-[1.03]">
+            </article>
+          </div>
+        </section>
+
+        <section
+          class="md:pt-24 bg-center z-[70] bg-[#184f28] pt-20 pb-20 relative"
+          id="contact">
+          <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+            <div class="absolute -left-40 top-10 h-[70vh] w-[60vh] rounded-full blur-3xl opacity-25"
+              style="background: radial-gradient(closest-side, rgba(255,255,255,0.15), rgba(0,0,0,0));"></div>
+          </div>
+
+          <div class="max-w-4xl mx-auto px-6">
+            <div class="text-center">
+              <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-100">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="mail" class="lucide lucide-mail h-4 w-4"><path d="M4 6l8 5 8-5" class=""></path><rect width="20" height="14" x="2" y="5" rx="2" class=""></rect></svg>
+                Let's Work Together
+              </span>
+              <h2 class="mt-4 text-4xl sm:text-6xl tracking-tight font-semibold text-white">
+                Ready to <span class="italic text-neutral-200">collaborate?</span>
+              </h2>
+              <p class="mt-4 text-neutral-400 text-lg max-w-2xl mx-auto">
+                Whether you need help with product design, strategy, or education, I'm here to help bring your vision to life.
+              </p>
+            </div>
+
+            <div class="mt-12 grid md:grid-cols-2 gap-8">
+              <div class="relative rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur">
+                <h3 class="text-xl font-semibold text-white mb-6">Send a Message</h3>
+                <form class="space-y-6">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-sm font-medium text-neutral-300 mb-2">Name</label>
+                      <input type="text" class="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-neutral-100 placeholder-neutral-400 focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20" placeholder="Your name">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-neutral-300 mb-2">Email</label>
+                      <input type="email" class="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-neutral-100 placeholder-neutral-400 focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20" placeholder="your@email.com">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-neutral-300 mb-2">Project Budget</label>
+                    <select class="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-neutral-100 focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20">
+                      <option>$5k - $10k</option>
+                      <option>$10k - $25k</option>
+                      <option>$25k - $50k</option>
+                      <option>$50k+</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-neutral-300 mb-2">Message</label>
+                    <textarea rows="4" class="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-neutral-100 placeholder-neutral-400 focus:border-white/20 focus:outline-none focus:ring-1 focus:ring-white/20" placeholder="Tell me about your project..."></textarea>
+                  </div>
+                  <button type="submit" class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-white/10 border border-white/20 px-6 py-3 text-neutral-100 hover:bg-white/15 transition">
+                    <span class="font-medium">Send Message</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="send" class="lucide lucide-send h-4 w-4"><path d="m22 2-7 20-4-9-9-4Z" class=""></path><path d="M22 2 11 13" class=""></path></svg>
+                  </button>
+                </form>
+              </div>
+
+              <div class="space-y-8">
+                <div class="relative rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur">
+                  <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 rounded-xl bg-white/10 border-white/10 p-3 shadow-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="mail" class="lucide lucide-mail h-6 w-6 text-white">
+                        <path d="M4 6l8 5 8-5" class=""></path>
+                        <rect width="20" height="14" x="2" y="5" rx="2" class=""></rect>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-semibold text-white">Email</h3>
+                      <p class="text-neutral-400">studio@hanoartsandcraft.com</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="relative rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur">
+                  <div class="flex items-center gap-4">
+                    <div class="h-12 w-12 rounded-xl bg-white/10 border-white/10 p-3 shadow-lg">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="calendar" class="lucide lucide-calendar h-6 w-6 text-white">
+                        <path d="M8 2v4" class=""></path>
+                        <path d="M16 2v4" class=""></path>
+                        <rect width="18" height="18" x="3" y="4" rx="2" class=""></rect>
+                        <path d="M3 10h18" class=""></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 class="text-lg font-semibold text-white">Schedule a Call</h3>
+                      <p class="text-neutral-400">Book a free consultation</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="relative rounded-2xl border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur">
+                  <h3 class="text-lg font-semibold text-white mb-4">Follow Me</h3>
+                  <div class="flex items-center gap-4">
+                    <a href="#" class="flex items-center justify-center w-10 h-10 rounded-lg bg-white/10 text-neutral-400 hover:text-white hover:bg-white/15 transition">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="instagram" class="lucide lucide-instagram">
+                        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" class=""></rect>
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" class=""></path>
+                        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" class=""></line>
+                      </svg>
+                    </a>
+                    <a href="#" class="flex items-center justify-center w-10 h-10 rounded-lg bg-white/10 text-neutral-400 hover:text-white hover:bg-white/15 transition">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="twitter" class="lucide lucide-twitter">
+                        <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" class=""></path>
+                      </svg>
+                    </a>
+                    <a href="#" class="flex items-center justify-center w-10 h-10 rounded-lg bg-white/10 text-neutral-400 hover:text-white hover:bg-white/15 transition">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="linkedin" class="lucide lucide-linkedin">
+                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" class=""></path>
+                        <rect width="4" height="12" x="2" y="9" class=""></rect>
+                        <circle cx="4" cy="4" r="2" class=""></circle>
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var gsapReady = typeof gsap !== 'undefined';
+        var motionTime = document.getElementById('motionTime');
+        var progress = document.getElementById('motionProgress');
+        var curtain = document.getElementById('motionCurtain');
+        var pageShell = document.getElementById('pageShell');
+
+        function splitHeadline() {
+          var el = document.querySelector('[data-motion="headline"]');
+          if (!el) return [];
+          var text = el.textContent.trim();
+          el.setAttribute('aria-label', text);
+          el.innerHTML = text.split(/\s+/).map(function (word) {
+            return '<span aria-hidden="true" class="inline-block overflow-hidden align-bottom"><span class="headline-word inline-block translate-y-full opacity-0">' + word + '&nbsp;</span></span>';
+          }).join('');
+          return el.querySelectorAll('.headline-word');
+        }
+
+        var headlineWords = splitHeadline();
+
+        if (reduceMotion || !gsapReady) {
+          if (curtain) curtain.style.display = 'none';
+          document.querySelectorAll('[data-motion], .headline-word').forEach(function (el) {
+            el.style.opacity = '1';
+            el.style.transform = 'none';
+          });
+        } else {
+          gsap.set(pageShell, { y: 26, scale: 0.985, opacity: 0 });
+          gsap.set('[data-motion="nav"], [data-motion="kicker"], [data-motion="introCopy"]', { y: 18, opacity: 0 });
+          gsap.set(headlineWords, { yPercent: 105, opacity: 0 });
+          gsap.set('[data-motion="frameCenter"]', { y: 50, scale: 0.92, rotate: -1.5, opacity: 0 });
+          gsap.set('[data-motion="frameLeft"], [data-motion="frameTop"], [data-motion="frameBottom"], [data-motion="frameRight"]', { y: 40, scale: 0.9, rotate: 3, opacity: 0 });
+          gsap.set('[data-motion="productA"], [data-motion="productB"], [data-motion="productC"]', { y: 30, opacity: 0, scale: 0.96 });
+          gsap.set('[data-motion="storyKicker"], [data-motion="storyTitle"], [data-motion="storyCopy"], [data-motion="testimonial"], [data-motion="newsletter"]', { y: 28, opacity: 0 });
+          gsap.set('[data-motion^="avatar"]', { scale: 0.7, opacity: 0 });
+          gsap.set('[data-motion="collectionKicker"], [data-motion="collectionTitle"], [data-motion="collectionCopy"], [data-motion="tabs"], [data-motion^="collection"]', { y: 34, opacity: 0 });
+          gsap.set('[data-motion="journalKicker"], [data-motion="journalTitle"], [data-motion="journalCopy"], [data-motion^="stat"], [data-motion="journalImage"]', { y: 32, opacity: 0 });
+          gsap.set('[data-motion="orbitBadge"]', { scale: 0.82, opacity: 0, y: 20 });
+
+          var clock = { t: 0 };
+          var tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+          function updateClock() {
+            var now = new Date();
+            var h = String(now.getHours()).padStart(2, '0');
+            var m = String(now.getMinutes()).padStart(2, '0');
+            motionTime.textContent = h + ':' + m;
+          }
+          updateClock();
+          setInterval(updateClock, 1000);
+
+          tl.to(progress, { scaleX: 1, duration: 3, ease: 'none' }, 0)
+          .from('.curtain-word', { y: 18, opacity: 0, duration: 0.3, stagger: 0.05 }, 0.05)
+          .from('.curtain-title', { y: 48, opacity: 0, scale: 0.98, duration: 0.5 }, 0.1)
+          .to('.curtain-title', { y: -18, opacity: 0, duration: 0.3, ease: 'power2.inOut' }, 0.8)
+          .to('.curtain-word', { opacity: 0, duration: 0.2 }, 0.85)
+          .to(curtain, { yPercent: -100, duration: 0.5, ease: 'expo.inOut' }, 0.9)
+          .to(pageShell, { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: 'expo.out' }, 1.1)
+          .to('[data-motion="nav"]', { y: 0, opacity: 1, duration: 0.3 }, 1.2)
+          .to('[data-motion="kicker"]', { y: 0, opacity: 1, duration: 0.3 }, 1.3)
+          .to(headlineWords, { yPercent: 0, opacity: 1, duration: 0.4, stagger: 0.02, ease: 'expo.out' }, 1.4)
+          .to('[data-motion="introCopy"]', { y: 0, opacity: 1, duration: 0.3 }, 1.6)
+          .to('[data-motion="frameCenter"]', { y: 0, scale: 1, rotate: 0, opacity: 1, duration: 0.4, ease: 'expo.out' }, 1.7)
+          .to('[data-motion="frameLeft"], [data-motion="frameTop"], [data-motion="frameBottom"], [data-motion="frameRight"]', { y: 0, scale: 1, rotate: 0, opacity: 1, duration: 0.35, stagger: 0.04, ease: 'back.out(1.35)' }, 1.85)
+          .to('[data-motion="orbitBadge"]', { scale: 1, y: 0, opacity: 1, duration: 0.25 }, 2.1)
+          .to('[data-motion="productA"], [data-motion="productB"], [data-motion="productC"]', { y: 0, opacity: 1, scale: 1, duration: 0.3, stagger: 0.05 }, 2.15)
+          .to('[data-motion="storyKicker"], [data-motion="storyTitle"], [data-motion="storyCopy"]', { y: 0, opacity: 1, duration: 0.3, stagger: 0.03 }, 2.3)
+          .to('[data-motion^="avatar"]', { scale: 1, opacity: 1, duration: 0.3, stagger: 0.03, ease: 'back.out(1.6)' }, 2.4)
+          .to('[data-motion="testimonial"]', { y: 0, opacity: 1, duration: 0.3 }, 2.5)
+          .to('[data-motion="newsletter"]', { y: 0, opacity: 1, duration: 0.3 }, 2.55)
+          .to('[data-motion="collectionKicker"], [data-motion="collectionTitle"], [data-motion="collectionCopy"]', { y: 0, opacity: 1, duration: 0.3, stagger: 0.03 }, 2.6)
+          .to('[data-motion="tabs"]', { y: 0, opacity: 1, duration: 0.3 }, 2.7)
+          .to('[data-motion^="collection"]', { y: 0, opacity: 1, duration: 0.3, stagger: 0.03 }, 2.75)
+          .to('[data-motion="journalKicker"], [data-motion="journalTitle"], [data-motion="journalCopy"], [data-motion^="stat"], [data-motion="journalImage"]', { y: 0, opacity: 1, duration: 0.3, stagger: 0.03 }, 2.8);
+
+          gsap.to('[data-motion="frameLeft"], [data-motion="frameRight"]', {
+            y: function (i) { return i ? -10 : 10; },
+            rotate: function (i) { return i ? 0.6 : -0.6; },
+            duration: 3.2,
+            repeat: -1,
+            yoyo: true,
+            ease: 'sine.inOut',
+            delay: 2.9
+          });
+
+          gsap.to('[data-motion="frameTop"], [data-motion="frameBottom"], [data-motion^="avatar"]', {
+            y: function (i) { return i % 2 ? 9 : -9; },
+            x: function (i) { return i % 2 ? -5 : 5; },
+            duration: 3.6,
+            repeat: -1,
+            yoyo: true,
+            stagger: 0.14,
+            ease: 'sine.inOut',
+            delay: 3.0
+          });
+        }
+
+        (function initWebGL() {
+          var canvas = document.getElementById('auraCanvas');
+          var fallback = document.getElementById('webglFallback');
+          if (!canvas || reduceMotion || typeof THREE === 'undefined') {
+            if (canvas) canvas.style.display = 'none';
+            return;
+          }
+
+          try {
+            var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+            var scene = new THREE.Scene();
+            var camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+            camera.position.z = 9;
+
+            var group = new THREE.Group();
+            scene.add(group);
+
+            function seeded(seed) {
+              var value = seed % 2147483647;
+              return function () {
+                value = value * 16807 % 2147483647;
+                return (value - 1) / 2147483646;
+              };
+            }
+
+            var rand = seeded(1947);
+            var geometry = new THREE.BufferGeometry();
+            var count = 680;
+            var positions = new Float32Array(count * 3);
+            var colors = new Float32Array(count * 3);
+
+            for (var i = 0; i < count; i++) {
+              var radius = 2.1 + rand() * 5.6;
+              var angle = rand() * Math.PI * 2;
+              positions[i * 3] = Math.cos(angle) * radius;
+              positions[i * 3 + 1] = (rand() - 0.5) * 6.8;
+              positions[i * 3 + 2] = Math.sin(angle) * radius;
+              var warm = rand();
+              colors[i * 3] = 0.58 + warm * 0.25;
+              colors[i * 3 + 1] = 0.78 + warm * 0.16;
+              colors[i * 3 + 2] = 0.48 + warm * 0.12;
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+            var material = new THREE.PointsMaterial({
+              size: 0.035,
+              vertexColors: true,
+              transparent: true,
+              opacity: 0.58,
+              depthWrite: false
+            });
+
+            var points = new THREE.Points(geometry, material);
+            group.add(points);
+
+            function resize() {
+              var width = window.innerWidth;
+              var height = window.innerHeight;
+              renderer.setSize(width, height, false);
+              camera.aspect = width / height;
+              camera.updateProjectionMatrix();
+            }
+
+            window.addEventListener('resize', resize);
+            resize();
+
+            var mx = 0;
+            var my = 0;
+            window.addEventListener('mousemove', function (event) {
+              mx = (event.clientX / window.innerWidth - 0.5) * 0.18;
+              my = (event.clientY / window.innerHeight - 0.5) * 0.18;
+            });
+
+            function animate(time) {
+              requestAnimationFrame(animate);
+              group.rotation.y = time * 0.00008 + mx;
+              group.rotation.x = Math.sin(time * 0.00018) * 0.055 + my;
+              points.rotation.z = time * 0.000045;
+              renderer.render(scene, camera);
+            }
+
+            if (fallback) fallback.style.opacity = '0.55';
+            animate(0);
+          } catch (error) {
+            canvas.style.display = 'none';
+            if (fallback) fallback.style.opacity = '0.85';
+          }
+        })();
+      })();
+    </script>
+
+    <script>
+      (function(){var reduceMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // Smooth scroll for internal anchor links
+      document.querySelectorAll('a[href^="#"]').forEach(function(link){link.addEventListener('click',function(e){var id=this.getAttribute('href');if(id&&id.length>1){var target=document.querySelector(id);if(target){e.preventDefault();target.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});}}});});
+      // Newsletter form
+      var form=document.querySelector('form[data-newsletter]');if(form){form.addEventListener('submit',function(e){e.preventDefault();var input=form.querySelector('input[type="email"]');var msg=form.querySelector('[data-newsletter-msg]');if(input&&input.value&&input.checkValidity()){if(msg){msg.textContent='Thank you — your request has been received.';msg.classList.remove('hidden');}input.value='';}else{if(msg){msg.textContent='Please enter a valid email address.';msg.classList.remove('hidden');}if(input)input.focus();}});}
+      // Collection tabs
+      var tabsWrap=document.querySelector('[data-motion="tabs"]');if(tabsWrap){var tabs=tabsWrap.querySelectorAll('button');var activeCls=['bg-[#ffe779]'];tabs.forEach(function(btn){btn.addEventListener('click',function(){tabs.forEach(function(b){b.classList.remove('bg-[#ffe779]');b.style.boxShadow='';b.setAttribute('aria-pressed','false');});btn.classList.add('bg-[#ffe779]');btn.style.boxShadow='inset 0 0.0625rem 0 rgba(255,255,255,.8), inset 0 -0.125rem .35rem rgba(128,98,0,.16), 0 .5rem 1.25rem rgba(184,139,0,.12)';btn.setAttribute('aria-pressed','true');});});}
+      // Testimonials carousel
+      (function(){var data=[{q:'\u201CThe capsule felt precise, not overworked. Every piece had a reason, and getting dressed became the easiest part of my week.\u201D',n:'Nora Vale',r:'Creative Director'},{q:'\u201CHano Arts and Craft rebuilt my wardrobe around how I actually live. The styling notes are the detail I never knew I needed.\u201D',n:'Ivy Marsh',r:'Gallery Curator'},{q:'\u201CEvery appointment feels considered and calm. The seasonal edits arrive exactly when I want something new.\u201D',n:'Lena Cardoso',r:'Founder, Atelier North'}];var idx=0;var block=document.querySelector('[data-motion="testimonial"]');if(!block)return;var qEl=block.querySelector('p');var nameEl=block.querySelectorAll('p')[1];var roleEl=block.querySelectorAll('p')[2];var btns=block.querySelectorAll('button');function render(){var d=data[idx];if(qEl)qEl.textContent=d.q;if(nameEl)nameEl.textContent=d.n;if(roleEl)roleEl.textContent=d.r;}if(btns[0])btns[0].addEventListener('click',function(){idx=(idx-1+data.length)%data.length;render();});if(btns[1])btns[1].addEventListener('click',function(){idx=(idx+1)%data.length;render();});})();
+      })();
+    </script>
+  
+<script data-aura-video-controller="true">
+(function () {
+  function playVideo(video) {
+    var promise = video.play();
+    if (promise && typeof promise.catch === "function") {
+      promise.catch(function () {});
+    }
+  }
+
+  function setupVideo(video) {
+    if (video.__auraVideoReady === true) return;
+    video.__auraVideoReady = true;
+    video.removeAttribute("data-aura-video-ready");
+    video.removeAttribute("data-aura-video-played");
+    video.muted = true;
+    video.playsInline = true;
+
+    var preset = video.dataset.auraVideoPreset || "loop-in-view";
+    if (preset === "hover") {
+      video.addEventListener("mouseenter", function () {
+        playVideo(video);
+      });
+      video.addEventListener("mouseleave", function () {
+        video.pause();
+        video.currentTime = 0;
+      });
+      return;
+    }
+
+    if (!("IntersectionObserver" in window)) {
+      playVideo(video);
+      return;
+    }
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          if (preset === "play-once" && video.__auraVideoPlayed === true) {
+            return;
+          }
+          playVideo(video);
+        } else {
+          video.pause();
+        }
+      });
+    }, { threshold: 0.35 });
+
+    if (preset === "play-once") {
+      video.addEventListener("ended", function () {
+        video.__auraVideoPlayed = true;
+      }, { once: true });
+    }
+
+    observer.observe(video);
+  }
+
+  function setupVideos() {
+    document
+      .querySelectorAll("video[data-aura-video-preset]")
+      .forEach(setupVideo);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupVideos);
+  } else {
+    setupVideos();
+  }
+})();</script></body></html>
