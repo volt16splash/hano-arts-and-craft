@@ -1,140 +1,31 @@
 <!DOCTYPE html>
-<html lang="en"><head><script id="aura-preview-performance-controller">
-(function() {
-if (window.__auraPreviewPerformanceController) return;
-const nativeRequestAnimationFrame = window.requestAnimationFrame
-? window.requestAnimationFrame.bind(window)
-: function(callback) { return window.setTimeout(function() { callback(Date.now()); }, 16); };
-const nativeCancelAnimationFrame = window.cancelAnimationFrame
-? window.cancelAnimationFrame.bind(window)
-: window.clearTimeout.bind(window);
-const nativeSetInterval = window.setInterval.bind(window);
-let paused = false;
-let nextFrameId = 1;
-const frameRecords = new Map();
-const pausedFrameCallbacks = new Map();
-const style = document.createElement('style');
-style.id = 'aura-preview-performance-style';
-style.textContent = [
-'html[data-aura-preview-paused="true"] *,',
-'html[data-aura-preview-paused="true"] *::before,',
-'html[data-aura-preview-paused="true"] *::after {',
-'  animation-play-state: paused !important;',
-'  transition-duration: 0s !important;',
-'  scroll-behavior: auto !important;',
-'}'
-].join('\n');
-document.head.appendChild(style);
-window.requestAnimationFrame = function(callback) {
-const frameId = nextFrameId++;
-if (paused) {
-pausedFrameCallbacks.set(frameId, callback);
-frameRecords.set(frameId, { paused: true });
-return frameId;
-}
-const nativeFrameId = nativeRequestAnimationFrame(function(timestamp) {
-frameRecords.delete(frameId);
-callback(timestamp);
-});
-frameRecords.set(frameId, { nativeFrameId: nativeFrameId });
-return frameId;
-};
-window.cancelAnimationFrame = function(frameId) {
-const record = frameRecords.get(frameId);
-pausedFrameCallbacks.delete(frameId);
-if (record && typeof record.nativeFrameId !== 'undefined') {
-nativeCancelAnimationFrame(record.nativeFrameId);
-}
-frameRecords.delete(frameId);
-};
-window.setInterval = function(callback, delay) {
-const args = Array.prototype.slice.call(arguments, 2);
-return nativeSetInterval(function() {
-if (paused) return;
-callback.apply(this, args);
-}, delay);
-};
-const flushPausedFrames = function() {
-const callbacks = Array.from(pausedFrameCallbacks.entries());
-pausedFrameCallbacks.clear();
-callbacks.forEach(function(entry) {
-const frameId = entry[0];
-const callback = entry[1];
-const nativeFrameId = nativeRequestAnimationFrame(function(timestamp) {
-frameRecords.delete(frameId);
-callback(timestamp);
-});
-frameRecords.set(frameId, { nativeFrameId: nativeFrameId });
-});
-};
-const setPaused = function(nextPaused) {
-const shouldPause = Boolean(nextPaused);
-if (paused === shouldPause) return;
-paused = shouldPause;
-document.documentElement.toggleAttribute('data-aura-preview-paused', paused);
-if (!paused) {
-flushPausedFrames();
-}
-};
-window.__auraPreviewPerformanceController = {
-setPaused: setPaused,
-get paused() {
-return paused;
-}
-};
-window.addEventListener('message', function(event) {
-if (event.source !== window.parent) return;
-if (!event.data || event.data.type !== 'aura-preview-performance-mode') return;
-setPaused(event.data.paused);
-});
-})();
-</script>
+<html lang="en">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hano Arts and Craft — Motion Edit</title>
-<meta name="description" content="A cinematic fashion landing experience for curated capsules, styling appointments, seasonal collections, and private release updates.">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<title>Hano Arts and Craft</title>
+<meta name="description" content="Handcrafted art pieces and bespoke designs by Hano Arts and Craft.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet"><!-- aura-ga4-start -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-2M6V79H761"></script>
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-2M6V79H761');
-</script>
-<!-- aura-ga4-end -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com" defer></script>
+<script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js" defer></script>
+<style>
+body{margin:0;background:#102818}
+.loader{position:fixed;inset:0;z-index:9999;background:#071009;display:flex;align-items:center;justify-content:center;transition:opacity .4s,visibility .4s}
+.loader.hidden{opacity:0;visibility:hidden}
+.loader-inner{text-align:center;color:#fffbe9}
+.loader-bar{width:200px;height:3px;background:rgba(255,255,255,.1);border-radius:99px;margin:20px auto 0;overflow:hidden}
+.loader-fill{height:100%;background:#e9ef96;border-radius:99px;animation:load 1.5s ease-in-out infinite}
+@keyframes load{0%{width:0;margin-left:0}50%{width:70%;margin-left:15%}100%{width:0;margin-left:100%}}
+</style>
 </head>
   <body class="min-h-screen overflow-x-hidden bg-[#102818] text-[#071009] antialiased [font-family:'Plus_Jakarta_Sans',system-ui,sans-serif] selection:bg-[#183f24] selection:text-[#f8f4de]">
-    <div id="webglFallback" aria-hidden="true" class="pointer-events-none fixed inset-0 z-0 opacity-70" style="background-image: radial-gradient(circle at 20% 18%, rgba(252,232,124,.22), transparent 24%), radial-gradient(circle at 82% 12%, rgba(175,234,194,.18), transparent 28%), radial-gradient(circle at 60% 78%, rgba(255,183,154,.16), transparent 26%), linear-gradient(135deg, #102818 0%, #18341f 52%, #0b1d12 100%);"></div>
-    <canvas id="auraCanvas" aria-hidden="true" class="pointer-events-none fixed inset-0 z-0 h-full w-full opacity-70" width="2144" height="1632"></canvas>
-
-    
-
-    <div id="motionCurtain" aria-hidden="true" class="pointer-events-none fixed inset-0 z-50 grid place-items-center bg-[#071009] text-[#f7f4df]">
-      <div class="relative w-[min(88vw,46rem)] overflow-hidden rounded-[2rem] border border-white/10 bg-white/[.03] p-5 sm:p-7" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.12), 0 2rem 6rem rgba(0,0,0,.34);">
-        <div class="absolute inset-0 opacity-25" style="background-image: linear-gradient(135deg, rgba(255,255,255,.14) 0.0625rem, transparent 0.0625rem); background-size: 1.25rem 1.25rem;"></div>
-        <div class="relative flex items-center justify-between gap-4">
-          <p class="curtain-word text-xs font-semibold uppercase tracking-[0.22rem] text-[#dcefc8]/75">
-            Hano Arts and Craft
-          </p>
-          <p id="motionTime" class="text-xs font-semibold tabular-nums text-[#dcefc8]/75"></p>
-        </div>
-        <div class="relative mt-16 sm:mt-20">
-          <p class="curtain-word text-xs font-semibold uppercase tracking-[0.28rem] text-[#dcefc8]/65">
-            Hano Arts and Craft
-          </p>
-          <h2 class="curtain-title mt-3 text-4xl font-semibold leading-[.92] tracking-tight text-[#fffbe9] sm:text-6xl lg:text-7xl">
-            Crafting art, inspiring every day.
-          </h2>
-        </div>
-        <div class="relative mt-10 h-1 overflow-hidden rounded-full bg-white/10">
-          <div id="motionProgress" class="h-full w-full origin-left scale-x-0 rounded-full bg-[#e9ef96]"></div>
-        </div>
+    <div class="loader" id="loader">
+      <div class="loader-inner">
+        <p style="font-size:12px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;opacity:.7">Hano Arts and Craft</p>
+        <h2 style="font-size:clamp(28px,5vw,48px);font-weight:600;margin:12px 0 0;line-height:1">Crafting art, inspiring every day.</h2>
+        <div class="loader-bar"><div class="loader-fill"></div></div>
       </div>
     </div><main class="relative z-10 mx-auto w-full max-w-[94rem] px-3 py-3 sm:px-5 sm:py-5 lg:px-8">
       <section id="pageShell" class="relative overflow-hidden rounded-[2rem] border border-white/15 bg-[#f7f7ed]" style="box-shadow: 0 1.5rem 5rem rgba(0,0,0,.34), inset 0 0.0625rem 0 rgba(255,255,255,.82);">
@@ -289,7 +180,7 @@ gtag('config', 'G-2M6V79H761');
 
               <div class="relative z-10 mt-8 h-[31rem] sm:h-[34rem]">
                 <div data-motion="frameLeft" class="absolute left-0 top-[19%] hidden h-[15rem] w-[10rem] overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:block lg:left-[2%]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.92), 0 1.25rem 2.75rem rgba(22,68,32,.16);">
-                  <img src="Mini Art Studio 💡🌻🪻What do I call this now .jpg" alt="Emerald editorial look with tailored styling" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="Mini Art Studio 💡🌻🪻What do I call this now .jpg">
+                  <img src="Mini Art Studio 💡🌻🪻What do I call this now .jpg" alt="Emerald editorial look with tailored styling" loading="lazy" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="Mini Art Studio 💡🌻🪻What do I call this now .jpg">
                 </div>
 
                 <div data-motion="frameCenter" class="absolute left-1/2 top-0 z-20 h-[24rem] w-[78%] -translate-x-1/2 overflow-hidden rounded-[2rem] border border-white/75 bg-white p-1 sm:h-[28rem] sm:w-[55%]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.94), 0 1.75rem 4rem rgba(22,68,32,.2);">
@@ -312,15 +203,15 @@ gtag('config', 'G-2M6V79H761');
                 </div>
 
                 <div data-motion="frameTop" class="absolute left-[8%] top-[3%] z-10 h-[11rem] w-[12rem] overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:left-[18%]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1.25rem 2.5rem rgba(22,68,32,.13);">
-                  <img src="Happy Sunday and Happy Mothers Day 🪻⚘️✨️The act of giving people gifts on days that are not c.jpg" alt="Pastel sculptural textile colors" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="Happy Sunday and Happy Mothers Day 🪻⚘️✨️The act of giving people gifts on days that are not c.jpg">
+                  <img src="Happy Sunday and Happy Mothers Day 🪻⚘️✨️The act of giving people gifts on days that are not c.jpg" alt="Pastel sculptural textile colors" loading="lazy" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="Happy Sunday and Happy Mothers Day 🪻⚘️✨️The act of giving people gifts on days that are not c.jpg">
                 </div>
 
                 <div data-motion="frameBottom" class="absolute bottom-0 left-[7%] z-20 h-[12rem] w-[13rem] overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:left-[20%]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1.25rem 2.5rem rgba(22,68,32,.14);">
-                  <img src="Birthdays are special ✨️ 💓 A day to be grateful for life and a day of sober reflection 💖Happy.jpg" alt="Warm editorial lifestyle scene" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="Birthdays are special ✨️ 💓 A day to be grateful for life and a day of sober reflection 💖Happy.jpg">
+                  <img src="Birthdays are special ✨️ 💓 A day to be grateful for life and a day of sober reflection 💖Happy.jpg" alt="Warm editorial lifestyle scene" loading="lazy" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="Birthdays are special ✨️ 💓 A day to be grateful for life and a day of sober reflection 💖Happy.jpg">
                 </div>
 
                 <div data-motion="frameRight" class="absolute right-0 top-[18%] h-[16rem] w-[10rem] overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:right-[2%]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.92), 0 1.25rem 2.75rem rgba(22,68,32,.16);">
-                  <img src="April is coming This is your cue to make a month planner🪻🌼✨️💕.jpg" alt="Deep green accessory with folded textile" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="April is coming This is your cue to make a month planner🪻🌼✨️💕.jpg">
+                  <img src="April is coming This is your cue to make a month planner🪻🌼✨️💕.jpg" alt="Deep green accessory with folded textile" loading="lazy" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="April is coming This is your cue to make a month planner🪻🌼✨️💕.jpg">
                 </div>
 
                 <div data-motion="orbitBadge" class="absolute bottom-10 right-[12%] z-30 hidden rounded-full border border-[#173f22]/10 bg-[#fffbed]/85 px-4 py-3 text-xs font-semibold text-[#112416] backdrop-blur sm:flex sm:items-center sm:gap-2" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.92), 0 1rem 2rem rgba(24,67,34,.13);">
@@ -333,19 +224,19 @@ gtag('config', 'G-2M6V79H761');
             <aside class="relative overflow-hidden bg-[#fbfaf3]">
               <div class="grid gap-3 p-4 sm:grid-cols-3 lg:grid-cols-1 lg:p-5 xl:grid-cols-3">
                 <article data-motion="productA" class="group relative h-48 overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:h-56 lg:h-48 xl:h-44" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2rem rgba(18,52,25,.12);">
-                  <img src="These Hano paper art pieces from last years collection are red, with the theme Love. It remi.jpg" alt="Ivory suit editorial image" class="h-full w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-105" data-element-src="These Hano paper art pieces from last years collection are red, with the theme Love. It remi.jpg">
+                  <img src="These Hano paper art pieces from last years collection are red, with the theme Love. It remi.jpg" alt="Ivory suit editorial image" loading="lazy" class="h-full w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-105" data-element-src="These Hano paper art pieces from last years collection are red, with the theme Love. It remi.jpg">
                   <span class="absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full bg-black text-white" aria-hidden="true">
                     <iconify-icon icon="solar:arrow-right-up-linear" stroke-width="1.5" class="text-base"></iconify-icon>
                   </span>
                 </article>
                 <article data-motion="productB" class="group relative h-48 overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:h-56 lg:h-48 xl:h-44" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2rem rgba(18,52,25,.12);">
-                  <img src="The first photo shows a book cover, old and worn out, but the next is beautifully fresh and tra.jpg" alt="Pastel pink paired styling" class="h-full w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-105">
+                  <img src="The first photo shows a book cover, old and worn out, but the next is beautifully fresh and tra.jpg" alt="Pastel pink paired styling" loading="lazy" class="h-full w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-105">
                   <span class="absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full bg-black text-white" aria-hidden="true">
                     <iconify-icon icon="solar:arrow-right-up-linear" stroke-width="1.5" class="text-base"></iconify-icon>
                   </span>
                 </article>
                 <article data-motion="productC" class="group relative h-48 overflow-hidden rounded-[1.5rem] border border-white/70 bg-white p-1 sm:h-56 lg:h-48 xl:h-44" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9), 0 1rem 2rem rgba(18,52,25,.12);">
-                  <img src="A blurry picture from last years collection.🌺.jpg" alt="Peach draped chair and fabric" class="h-full w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-105">
+                  <img src="A blurry picture from last years collection.🌺.jpg" alt="Peach draped chair and fabric" loading="lazy" class="h-full w-full rounded-[1.15rem] object-cover transition duration-700 group-hover:scale-105">
                   <span class="absolute bottom-3 right-3 grid h-9 w-9 place-items-center rounded-full bg-black text-white" aria-hidden="true">
                     <iconify-icon icon="solar:arrow-right-up-linear" stroke-width="1.5" class="text-base"></iconify-icon>
                   </span>
@@ -625,277 +516,11 @@ gtag('config', 'G-2M6V79H761');
     </main>
 
     <script>
-      (function () {
-        var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var gsapReady = typeof gsap !== 'undefined';
-        var motionTime = document.getElementById('motionTime');
-        var progress = document.getElementById('motionProgress');
-        var curtain = document.getElementById('motionCurtain');
-        var pageShell = document.getElementById('pageShell');
-
-        function splitHeadline() {
-          var el = document.querySelector('[data-motion="headline"]');
-          if (!el) return [];
-          var text = el.textContent.trim();
-          el.setAttribute('aria-label', text);
-          el.innerHTML = text.split(/\s+/).map(function (word) {
-            return '<span aria-hidden="true" class="inline-block overflow-hidden align-bottom"><span class="headline-word inline-block translate-y-full opacity-0">' + word + '&nbsp;</span></span>';
-          }).join('');
-          return el.querySelectorAll('.headline-word');
-        }
-
-        var headlineWords = splitHeadline();
-
-        if (reduceMotion || !gsapReady) {
-          if (curtain) curtain.style.display = 'none';
-          document.querySelectorAll('[data-motion], .headline-word').forEach(function (el) {
-            el.style.opacity = '1';
-            el.style.transform = 'none';
-          });
-        } else {
-          gsap.set(pageShell, { y: 26, scale: 0.985, opacity: 0 });
-          gsap.set('[data-motion="nav"], [data-motion="kicker"], [data-motion="introCopy"]', { y: 18, opacity: 0 });
-          gsap.set(headlineWords, { yPercent: 105, opacity: 0 });
-          gsap.set('[data-motion="frameCenter"]', { y: 50, scale: 0.92, rotate: -1.5, opacity: 0 });
-          gsap.set('[data-motion="frameLeft"], [data-motion="frameTop"], [data-motion="frameBottom"], [data-motion="frameRight"]', { y: 40, scale: 0.9, rotate: 3, opacity: 0 });
-          gsap.set('[data-motion="productA"], [data-motion="productB"], [data-motion="productC"]', { y: 30, opacity: 0, scale: 0.96 });
-          gsap.set('[data-motion="storyKicker"], [data-motion="storyTitle"], [data-motion="storyCopy"], [data-motion="testimonial"], [data-motion="newsletter"]', { y: 28, opacity: 0 });
-          gsap.set('[data-motion^="avatar"]', { scale: 0.7, opacity: 0 });
-          gsap.set('[data-motion="collectionKicker"], [data-motion="collectionTitle"], [data-motion="collectionCopy"], [data-motion="tabs"], [data-motion^="collection"]', { y: 34, opacity: 0 });
-          gsap.set('[data-motion="journalKicker"], [data-motion="journalTitle"], [data-motion="journalCopy"], [data-motion^="stat"], [data-motion="journalImage"]', { y: 32, opacity: 0 });
-          gsap.set('[data-motion="orbitBadge"]', { scale: 0.82, opacity: 0, y: 20 });
-
-          var clock = { t: 0 };
-          var tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
-
-          function updateClock() {
-            var now = new Date();
-            var h = String(now.getHours()).padStart(2, '0');
-            var m = String(now.getMinutes()).padStart(2, '0');
-            motionTime.textContent = h + ':' + m;
-          }
-          updateClock();
-          setInterval(updateClock, 1000);
-
-          tl.to(progress, { scaleX: 1, duration: 3, ease: 'none' }, 0)
-          .from('.curtain-word', { y: 18, opacity: 0, duration: 0.3, stagger: 0.05 }, 0.05)
-          .from('.curtain-title', { y: 48, opacity: 0, scale: 0.98, duration: 0.5 }, 0.1)
-          .to('.curtain-title', { y: -18, opacity: 0, duration: 0.3, ease: 'power2.inOut' }, 0.8)
-          .to('.curtain-word', { opacity: 0, duration: 0.2 }, 0.85)
-          .to(curtain, { yPercent: -100, duration: 0.5, ease: 'expo.inOut' }, 0.9)
-          .to(pageShell, { y: 0, scale: 1, opacity: 1, duration: 0.5, ease: 'expo.out' }, 1.1)
-          .to('[data-motion="nav"]', { y: 0, opacity: 1, duration: 0.3 }, 1.2)
-          .to('[data-motion="kicker"]', { y: 0, opacity: 1, duration: 0.3 }, 1.3)
-          .to(headlineWords, { yPercent: 0, opacity: 1, duration: 0.4, stagger: 0.02, ease: 'expo.out' }, 1.4)
-          .to('[data-motion="introCopy"]', { y: 0, opacity: 1, duration: 0.3 }, 1.6)
-          .to('[data-motion="frameCenter"]', { y: 0, scale: 1, rotate: 0, opacity: 1, duration: 0.4, ease: 'expo.out' }, 1.7)
-          .to('[data-motion="frameLeft"], [data-motion="frameTop"], [data-motion="frameBottom"], [data-motion="frameRight"]', { y: 0, scale: 1, rotate: 0, opacity: 1, duration: 0.35, stagger: 0.04, ease: 'back.out(1.35)' }, 1.85)
-          .to('[data-motion="orbitBadge"]', { scale: 1, y: 0, opacity: 1, duration: 0.25 }, 2.1)
-          .to('[data-motion="productA"], [data-motion="productB"], [data-motion="productC"]', { y: 0, opacity: 1, scale: 1, duration: 0.3, stagger: 0.05 }, 2.15)
-          .to('[data-motion="storyKicker"], [data-motion="storyTitle"], [data-motion="storyCopy"]', { y: 0, opacity: 1, duration: 0.3, stagger: 0.03 }, 2.3)
-          .to('[data-motion^="avatar"]', { scale: 1, opacity: 1, duration: 0.3, stagger: 0.03, ease: 'back.out(1.6)' }, 2.4)
-          .to('[data-motion="testimonial"]', { y: 0, opacity: 1, duration: 0.3 }, 2.5)
-          .to('[data-motion="newsletter"]', { y: 0, opacity: 1, duration: 0.3 }, 2.55)
-          .to('[data-motion="collectionKicker"], [data-motion="collectionTitle"], [data-motion="collectionCopy"]', { y: 0, opacity: 1, duration: 0.3, stagger: 0.03 }, 2.6)
-          .to('[data-motion="tabs"]', { y: 0, opacity: 1, duration: 0.3 }, 2.7)
-          .to('[data-motion^="collection"]', { y: 0, opacity: 1, duration: 0.3, stagger: 0.03 }, 2.75)
-          .to('[data-motion="journalKicker"], [data-motion="journalTitle"], [data-motion="journalCopy"], [data-motion^="stat"], [data-motion="journalImage"]', { y: 0, opacity: 1, duration: 0.3, stagger: 0.03 }, 2.8);
-
-          gsap.to('[data-motion="frameLeft"], [data-motion="frameRight"]', {
-            y: function (i) { return i ? -10 : 10; },
-            rotate: function (i) { return i ? 0.6 : -0.6; },
-            duration: 3.2,
-            repeat: -1,
-            yoyo: true,
-            ease: 'sine.inOut',
-            delay: 2.9
-          });
-
-          gsap.to('[data-motion="frameTop"], [data-motion="frameBottom"], [data-motion^="avatar"]', {
-            y: function (i) { return i % 2 ? 9 : -9; },
-            x: function (i) { return i % 2 ? -5 : 5; },
-            duration: 3.6,
-            repeat: -1,
-            yoyo: true,
-            stagger: 0.14,
-            ease: 'sine.inOut',
-            delay: 3.0
-          });
-        }
-
-        (function initWebGL() {
-          var canvas = document.getElementById('auraCanvas');
-          var fallback = document.getElementById('webglFallback');
-          if (!canvas || reduceMotion || typeof THREE === 'undefined') {
-            if (canvas) canvas.style.display = 'none';
-            return;
-          }
-
-          try {
-            var renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-
-            var scene = new THREE.Scene();
-            var camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-            camera.position.z = 9;
-
-            var group = new THREE.Group();
-            scene.add(group);
-
-            function seeded(seed) {
-              var value = seed % 2147483647;
-              return function () {
-                value = value * 16807 % 2147483647;
-                return (value - 1) / 2147483646;
-              };
-            }
-
-            var rand = seeded(1947);
-            var geometry = new THREE.BufferGeometry();
-            var count = 680;
-            var positions = new Float32Array(count * 3);
-            var colors = new Float32Array(count * 3);
-
-            for (var i = 0; i < count; i++) {
-              var radius = 2.1 + rand() * 5.6;
-              var angle = rand() * Math.PI * 2;
-              positions[i * 3] = Math.cos(angle) * radius;
-              positions[i * 3 + 1] = (rand() - 0.5) * 6.8;
-              positions[i * 3 + 2] = Math.sin(angle) * radius;
-              var warm = rand();
-              colors[i * 3] = 0.58 + warm * 0.25;
-              colors[i * 3 + 1] = 0.78 + warm * 0.16;
-              colors[i * 3 + 2] = 0.48 + warm * 0.12;
-            }
-
-            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-            var material = new THREE.PointsMaterial({
-              size: 0.035,
-              vertexColors: true,
-              transparent: true,
-              opacity: 0.58,
-              depthWrite: false
-            });
-
-            var points = new THREE.Points(geometry, material);
-            group.add(points);
-
-            function resize() {
-              var width = window.innerWidth;
-              var height = window.innerHeight;
-              renderer.setSize(width, height, false);
-              camera.aspect = width / height;
-              camera.updateProjectionMatrix();
-            }
-
-            window.addEventListener('resize', resize);
-            resize();
-
-            var mx = 0;
-            var my = 0;
-            window.addEventListener('mousemove', function (event) {
-              mx = (event.clientX / window.innerWidth - 0.5) * 0.18;
-              my = (event.clientY / window.innerHeight - 0.5) * 0.18;
-            });
-
-            function animate(time) {
-              requestAnimationFrame(animate);
-              group.rotation.y = time * 0.00008 + mx;
-              group.rotation.x = Math.sin(time * 0.00018) * 0.055 + my;
-              points.rotation.z = time * 0.000045;
-              renderer.render(scene, camera);
-            }
-
-            if (fallback) fallback.style.opacity = '0.55';
-            animate(0);
-          } catch (error) {
-            canvas.style.display = 'none';
-            if (fallback) fallback.style.opacity = '0.85';
-          }
-        })();
-      })();
-    </script>
-
-    <script>
-      (function(){var reduceMotion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      // Smooth scroll for internal anchor links
-      document.querySelectorAll('a[href^="#"]').forEach(function(link){link.addEventListener('click',function(e){var id=this.getAttribute('href');if(id&&id.length>1){var target=document.querySelector(id);if(target){e.preventDefault();target.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});}}});});
-      // Newsletter form
-      var form=document.querySelector('form[data-newsletter]');if(form){form.addEventListener('submit',function(e){e.preventDefault();var input=form.querySelector('input[type="email"]');var msg=form.querySelector('[data-newsletter-msg]');if(input&&input.value&&input.checkValidity()){if(msg){msg.textContent='Thank you — your request has been received.';msg.classList.remove('hidden');}input.value='';}else{if(msg){msg.textContent='Please enter a valid email address.';msg.classList.remove('hidden');}if(input)input.focus();}});}
-      // Collection tabs
-      var tabsWrap=document.querySelector('[data-motion="tabs"]');if(tabsWrap){var tabs=tabsWrap.querySelectorAll('button');var activeCls=['bg-[#ffe779]'];tabs.forEach(function(btn){btn.addEventListener('click',function(){tabs.forEach(function(b){b.classList.remove('bg-[#ffe779]');b.style.boxShadow='';b.setAttribute('aria-pressed','false');});btn.classList.add('bg-[#ffe779]');btn.style.boxShadow='inset 0 0.0625rem 0 rgba(255,255,255,.8), inset 0 -0.125rem .35rem rgba(128,98,0,.16), 0 .5rem 1.25rem rgba(184,139,0,.12)';btn.setAttribute('aria-pressed','true');});});}
-      // Testimonials carousel
-      (function(){var data=[{q:'\u201CThe capsule felt precise, not overworked. Every piece had a reason, and getting dressed became the easiest part of my week.\u201D',n:'Nora Vale',r:'Creative Director'},{q:'\u201CHano Arts and Craft rebuilt my wardrobe around how I actually live. The styling notes are the detail I never knew I needed.\u201D',n:'Ivy Marsh',r:'Gallery Curator'},{q:'\u201CEvery appointment feels considered and calm. The seasonal edits arrive exactly when I want something new.\u201D',n:'Lena Cardoso',r:'Founder, Atelier North'}];var idx=0;var block=document.querySelector('[data-motion="testimonial"]');if(!block)return;var qEl=block.querySelector('p');var nameEl=block.querySelectorAll('p')[1];var roleEl=block.querySelectorAll('p')[2];var btns=block.querySelectorAll('button');function render(){var d=data[idx];if(qEl)qEl.textContent=d.q;if(nameEl)nameEl.textContent=d.n;if(roleEl)roleEl.textContent=d.r;}if(btns[0])btns[0].addEventListener('click',function(){idx=(idx-1+data.length)%data.length;render();});if(btns[1])btns[1].addEventListener('click',function(){idx=(idx+1)%data.length;render();});})();
-      })();
-    </script>
-  
-<script data-aura-video-controller="true">
-(function () {
-  function playVideo(video) {
-    var promise = video.play();
-    if (promise && typeof promise.catch === "function") {
-      promise.catch(function () {});
-    }
-  }
-
-  function setupVideo(video) {
-    if (video.__auraVideoReady === true) return;
-    video.__auraVideoReady = true;
-    video.removeAttribute("data-aura-video-ready");
-    video.removeAttribute("data-aura-video-played");
-    video.muted = true;
-    video.playsInline = true;
-
-    var preset = video.dataset.auraVideoPreset || "loop-in-view";
-    if (preset === "hover") {
-      video.addEventListener("mouseenter", function () {
-        playVideo(video);
-      });
-      video.addEventListener("mouseleave", function () {
-        video.pause();
-        video.currentTime = 0;
-      });
-      return;
-    }
-
-    if (!("IntersectionObserver" in window)) {
-      playVideo(video);
-      return;
-    }
-
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          if (preset === "play-once" && video.__auraVideoPlayed === true) {
-            return;
-          }
-          playVideo(video);
-        } else {
-          video.pause();
+      window.addEventListener('load', function() {
+        var loader = document.getElementById('loader');
+        if (loader) {
+          loader.classList.add('hidden');
+          setTimeout(function() { loader.remove(); }, 500);
         }
       });
-    }, { threshold: 0.35 });
-
-    if (preset === "play-once") {
-      video.addEventListener("ended", function () {
-        video.__auraVideoPlayed = true;
-      }, { once: true });
-    }
-
-    observer.observe(video);
-  }
-
-  function setupVideos() {
-    document
-      .querySelectorAll("video[data-aura-video-preset]")
-      .forEach(setupVideo);
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", setupVideos);
-  } else {
-    setupVideos();
-  }
-})();</script></body></html>
+    </script></body></html>
