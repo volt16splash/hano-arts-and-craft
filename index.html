@@ -50,6 +50,7 @@ img,video{max-width:100%;height:auto;display:block}
   .max-w-md{max-width:100%!important}
   .gap-12{gap:20px!important}
   .gap-6{gap:12px!important}
+  .gap-8{gap:12px!important}
   .mt-12{margin-top:24px!important}
   .px-6{padding-left:12px!important;padding-right:12px!important}
   .py-10,.lg\:py-12,.lg\:py-24{padding-top:20px!important;padding-bottom:20px!important}
@@ -59,6 +60,15 @@ img,video{max-width:100%;height:auto;display:block}
   nav .hidden.md\:flex{display:none!important}
   .text-7xl{font-size:3rem!important}
   .select-none.text-7xl{font-size:2.5rem!important}
+  /* Contact section */
+  #contact .grid{grid-template-columns:1fr!important}
+  #contact .space-y-8{display:flex;flex-direction:column;gap:12px!important}
+  #contact .rounded-2xl{border-radius:1rem!important}
+  #contact input,.contact select,.contact textarea{font-size:14px!important;padding:10px!important}
+  #contact .text-4xl,#contact .sm\:text-6xl{font-size:1.5rem!important}
+  #contact .text-lg{font-size:1rem!important}
+  #contact .mt-8{margin-top:16px!important}
+  #contact .px-4{padding-left:10px!important;padding-right:10px!important}
 }
 
 /* Tablets */
@@ -145,11 +155,7 @@ img,video{max-width:100%;height:auto;display:block}
         </header>
 
         <!-- Footer -->
-        <footer class="p-5 md:p-6 flex justify-between items-end relative z-20">
-            <div class="text-xs text-[#132516]/60 max-w-[200px] leading-relaxed font-light">
-                Curated sartorial elegance in motion. Exploring textures in real-time.
-            </div>
-        </footer>
+        <footer class="p-5 md:p-6 flex justify-between items-end relative z-20"></footer>
     </div>
 
     <!-- Main Motion Area -->
@@ -164,16 +170,14 @@ img,video{max-width:100%;height:auto;display:block}
 </div>
 
         <!-- Video in center -->
-        <div class="relative z-20 w-[320px] h-[420px] md:w-[480px] md:h-[560px] rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
+        <div class="relative z-20 w-[85vw] max-w-[480px] aspect-[3/4] rounded-3xl overflow-hidden border border-white/20 shadow-2xl">
             <video autoplay muted loop playsinline class="w-full h-full object-cover">
                 <source src="media-3c2e2561.mp4" type="video/mp4">
             </video>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" class=""></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Draggable.min.js" class=""></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    
     
     <script>
         function initHeroSequence() {
@@ -191,9 +195,7 @@ img,video{max-width:100%;height:auto;display:block}
 </div>        <section class="relative z-10 border-b border-[#173f22]/10 bg-[#fffbed] px-5 py-10 sm:px-8 lg:px-10 lg:py-12" style="background-image: radial-gradient(circle at 45% 0%, rgba(255,232,126,.35), transparent 26%), linear-gradient(180deg,#fffbea 0%,#fffef9 66%); box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.9)" id="collection">
           <div class="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
             <div class="">
-              <p data-motion="collectionKicker" class="text-xs font-semibold uppercase tracking-[0.18rem] text-[#6f5a11]/65">
-                Capsule board
-              </p>
+              
               <h2 data-motion="collectionTitle" class="mt-2 text-3xl font-semibold tracking-tight text-[#161b12] sm:text-4xl">
                 Collection in warm focus
               </h2>
@@ -280,10 +282,7 @@ img,video{max-width:100%;height:auto;display:block}
                   <img src="media-55f8678b.jpg" alt="Deep green accessory with folded textile" loading="lazy" class="h-full w-full rounded-[1.15rem] object-cover" data-element-src="media-55f8678b.jpg">
                 </div>
 
-                <div data-motion="orbitBadge" class="absolute bottom-10 right-[12%] z-30 hidden rounded-full border border-[#173f22]/10 bg-[#fffbed]/85 px-4 py-3 text-xs font-semibold text-[#112416] backdrop-blur sm:flex sm:items-center sm:gap-2" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.92), 0 1rem 2rem rgba(24,67,34,.13);">
-                  <iconify-icon icon="solar:stars-linear" stroke-width="1.5" class="text-base text-[#245b31]"></iconify-icon>
-                  Eight-second reveal
-                </div>
+                
           </div>
         </section>
 
@@ -408,12 +407,9 @@ img,video{max-width:100%;height:auto;display:block}
         Hano Arts and Craft is a creative studio dedicated to bringing imagination to life through handcrafted art pieces and bespoke designs. We blend traditional techniques with modern aesthetics to create unique works that inspire and captivate. Every piece we create tells a story, reflecting our passion for quality craftsmanship and attention to detail. From concept to completion, we collaborate closely with our clients to deliver art that resonates and endures.
       </p>
       <div class="mt-10 flex flex-wrap items-center gap-4 sm:gap-6">
-        <a href="#" class="inline-flex items-center gap-2 rounded-full bg-[#0e2113] px-6 py-3 text-xs font-semibold text-white transition hover:bg-[#173b20]" style="box-shadow: inset 0 0.0625rem 0 rgba(255,255,255,.16), inset 0 -0.125rem .375rem rgba(0,0,0,.28), 0 .75rem 1.5rem rgba(16,50,24,.18);">
-          See More
-          <i data-lucide="arrow-right" class="h-4 w-4"></i>
-        </a>
-        <a href="#all-crafts" class="inline-flex items-center gap-2 rounded-full px-4 py-3 text-xs font-semibold text-[#161b12] transition hover:bg-white/50">
+        <a href="#all-crafts" class="inline-flex items-center gap-2 rounded-full bg-[#0e2113] px-6 py-3 text-xs font-semibold text-white transition hover:bg-[#173b20]">
           Explore the Crafts
+          <iconify-icon icon="solar:arrow-right-linear" stroke-width="1.5" class="text-base"></iconify-icon>
         </a>
       </div>
     </div>
@@ -470,29 +466,25 @@ img,video{max-width:100%;height:auto;display:block}
           </div>
         </section>
 
-        <section
-          class="md:pt-24 bg-center z-[70] bg-[#184f28] pt-20 pb-20 relative"
+        <section class="md:pt-16 bg-center z-[70] bg-[#184f28] pt-12 pb-12 px-4 relative"
           id="contact">
           <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
             <div class="absolute -left-40 top-10 h-[70vh] w-[60vh] rounded-full blur-3xl opacity-25"
               style="background: radial-gradient(closest-side, rgba(255,255,255,0.15), rgba(0,0,0,0));"></div>
           </div>
 
-          <div class="max-w-4xl mx-auto px-6">
+          <div class="max-w-4xl mx-auto px-4 sm:px-6">
             <div class="text-center">
-              <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-neutral-100">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="mail" class="lucide lucide-mail h-4 w-4"><path d="M4 6l8 5 8-5" class=""></path><rect width="20" height="14" x="2" y="5" rx="2" class=""></rect></svg>
-                Let's Work Together
-              </span>
+              
               <h2 class="mt-4 text-4xl sm:text-6xl tracking-tight font-semibold text-white">
-                Ready to <span class="italic text-neutral-200">collaborate?</span>
+                Ready to <span class="italic text-neutral-200">purchase from us right now?</span>
               </h2>
               <p class="mt-4 text-neutral-400 text-lg max-w-2xl mx-auto">
-                Whether you need help with product design, strategy, or education, I'm here to help bring your vision to life.
+                Whether you need handcrafted art pieces, bespoke designs, or custom creations, we are here to bring your vision to life.
               </p>
             </div>
 
-            <div class="mt-12 grid md:grid-cols-2 gap-8">
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
               <div class="relative rounded-2xl border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur">
                 <h3 class="text-xl font-semibold text-white mb-6">Send a Message</h3>
                 <form class="space-y-6">
